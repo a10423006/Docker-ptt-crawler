@@ -42,7 +42,7 @@ def get_Alllinks(boards=boards):
                 latest_p = int(latest_link_p[latest_link_p.index("index")+len("index"):latest_link_p.index(".")])
     
         # 取得所有連結 # 從最新的開始 # 限定頁數方便測試，刪除後則抓取全部
-        for i in range(latest_p+1, latest_p-20, -1): 
+        for i in range(latest_p+1, latest_p-51, -1): 
             res = url_connect(url[:url.index(".html")] + str(i) + url[url.index(".html"):])
             # html分解
             items_html = soup.findAll("div", {"class", "r-ent"})
@@ -55,19 +55,20 @@ def get_Alllinks(boards=boards):
             time.sleep(2)
     print("抓取看版: " + str(boards) + ", 頁數: " + str(20))
 
-def get_articleInfo(All_links, datetime_start=dt.today()-datetime.timedelta(days=3), datetime_end=dt.today()):
+def get_articleInfo(All_links, datetime_start, datetime_end):
     for link in All_links:
         res = url_connect(link)
         # html分解
         soup = BeautifulSoup(res.content, "html.parser")
         contents = soup.findAll("span", {"class", "article-meta-value"})
         # 取得文章時間
-        article_time = dt.strptime(contents[3].text, "%a %b  %d %H:%M:%S %Y")
+        print(article_time)
+        article_time = time.mktime(dt.strptime(contents[3].text, "%a %b  %d %H:%M:%S %Y").timetuple())
         # 判斷文章是否在時間範圍內
-        if article_time > datetime_start and article_time < datetime_end:
+        if article_time > time.mktime(datetime_start.timetuple()) and article_time < time.mktime(datetime_end.timetuple()):
             author_info = contents[0].text
             author_Id.append(author_info[:author_info.index(" (")])
-            author_Name.append(author_info[author_info.index(" ("):author_info.index(")")])
+            author_Name.append(author_info[author_info.index(" (")+1:author_info.index(")")])
             article_board.append(contents[1].text)
             titles.append(contents[2].text)
             pub_Time.append(contents[3].text)
