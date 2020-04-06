@@ -45,15 +45,16 @@ def get_Alllinks(boards=boards):
         for i in range(latest_p+1, latest_p-51, -1): 
             res = url_connect(url[:url.index(".html")] + str(i) + url[url.index(".html"):])
             # html分解
-            items_html = soup.findAll("div", {"class", "r-ent"})
+            soup = BeautifulSoup(res.content, "html.parser")
+            items_html = soup.findAll("div", {"class", "title"})
             for item in items_html:
                 article = item.find('a')
                 # 避免有文章刪除
-                if article != []:
+                if article != None:
                     links.append("https://www.ptt.cc" + article.get('href'))
             # 休息 2 秒
             time.sleep(2)
-    print("抓取看版: " + str(boards) + ", 頁數: " + str(20))
+    print("抓取看版: " + str(boards) + ", 頁數: " + str(latest_p-51) + " - " + str(latest_p+1))
 
 def get_articleInfo(All_links, datetime_start, datetime_end):
     for link in All_links:
@@ -62,32 +63,32 @@ def get_articleInfo(All_links, datetime_start, datetime_end):
         soup = BeautifulSoup(res.content, "html.parser")
         contents = soup.findAll("span", {"class", "article-meta-value"})
         # 取得文章時間
-        print(article_time)
-        article_time = time.mktime(dt.strptime(contents[3].text, "%a %b  %d %H:%M:%S %Y").timetuple())
-        # 判斷文章是否在時間範圍內
-        if article_time > time.mktime(datetime_start.timetuple()) and article_time < time.mktime(datetime_end.timetuple()):
-            author_info = contents[0].text
-            author_Id.append(author_info[:author_info.index(" (")])
-            author_Name.append(author_info[author_info.index(" (")+1:author_info.index(")")])
-            article_board.append(contents[1].text)
-            titles.append(contents[2].text)
-            pub_Time.append(contents[3].text)
-            canonicalUrl.append(soup.findAll("link")[0].get("href"))
-            article_content.append(soup.findAll("meta")[4].get("content"))
-            createdTime.append(time.ctime())
-            updateTime.append(time.ctime())
-            # 抓取推文者資訊
-            push_infos = soup.findAll("div", {"class", "push"})
-            if push_infos != []:
-                push_info = push_infos[0].findAll("span")
-                comment_Id.append(push_info[1].text)
-                comment_content.append(push_info[2].text)
-                push_ipdate = push_info[3].text
-                comment_time.append(push_ipdate[push_ipdate.index(" ")+1:])
-            else:
-                comment_Id.append("empty")
-                comment_content.append("empty")
-                comment_time.append("empty")
+        if len(contents) == 4:
+            article_time = dt.strptime(contents[3].text, "%a %b  %d %H:%M:%S %Y")
+            # 判斷文章是否在時間範圍內
+            if article_time > datetime_start and article_time < datetime_end:
+                author_info = contents[0].text
+                author_Id.append(author_info[:author_info.index(" (")])
+                author_Name.append(author_info[author_info.index(" (")+2:author_info.index(")")])
+                article_board.append(contents[1].text)
+                titles.append(contents[2].text)
+                pub_Time.append(contents[3].text)
+                canonicalUrl.append(soup.findAll("link")[0].get("href"))
+                article_content.append(soup.findAll("meta")[4].get("content"))
+                createdTime.append(time.ctime())
+                updateTime.append(time.ctime())
+                # 抓取推文者資訊
+                push_infos = soup.findAll("div", {"class", "push"})
+                if push_infos != []:
+                    push_info = push_infos[0].findAll("span")
+                    comment_Id.append(push_info[1].text)
+                    comment_content.append(push_info[2].text)
+                    push_ipdate = push_info[3].text
+                    comment_time.append(push_ipdate[push_ipdate.index(" ")+1:])
+                else:
+                    comment_Id.append("empty")
+                    comment_content.append("empty")
+                    comment_time.append("empty")
     print("文章數: " + str(len(titles)) + " (" + datetime_start.strftime("%Y/%m/%d %H:%M:%S") + " - " + datetime_end.strftime("%Y/%m/%d %H:%M:%S") + " )")
 
 try:
@@ -140,3 +141,5 @@ except requests.exceptions.Timeout as e:
     print ("Timeout Error:", e)
 except requests.exceptions.RequestException as e:
     print ("OOps: Something Else", e)
+
+# %%
